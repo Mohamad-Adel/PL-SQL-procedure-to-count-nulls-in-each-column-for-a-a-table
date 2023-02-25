@@ -1,0 +1,39 @@
+create or replace procedure Table_null_columns (Table_name_in varchar)
+is
+count_of_nulls number;
+error_found number;
+Nullable varchar(20);
+table_error exception;
+CURSOR table_columns is
+select column_name from all_tab_columns where owner=USER and
+table_name=upper(Table_name_in);
+begin
+error_found:=1;
+for y in (SELECT DISTINCT OBJECT_NAME as sss FROM USER_OBJECTS WHERE OBJECT_TYPE =
+'TABLE')
+loop
+if y.sss = upper(Table_name_in) then error_found:=0;
+end if;
+end loop;
+if error_found=1
+then raise table_error;
+end if ;
+dbms_output.put_line('For the table: '||to_char(upper(Table_name_in))||' The columns are:
+');
+dbms_output.put_line(' ');
+dbms_output.put_line('----------------------------------------------------');
+dbms_output.put_line(' ');
+for i in table_columns
+loop
+EXECUTE IMMEDIATE 'select count(*)-count(' || i.column_name || ') from '||Table_name_in
+into count_of_nulls;
+if count_of_nulls = 0 then Nullable:='NonNullable';
+else Nullable:='Nullable';
+end if ;
+dbms_output.put_line(i.column_name||' '||count_of_nulls||' '||nullable);
+dbms_output.put_line(' ');
+end loop;
+exception
+when table_error then
+dbms_output.put_line(table_name_in||' Table Not found');
+end;
